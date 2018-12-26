@@ -186,15 +186,15 @@ namespace HoughCramerCornerTest
             //
             //输出矩形,长方形:  
 
-            if (sc.Corner.X != -65536)
-            {
-                //CvInvoke.Circle(remapImg,new Point((int)sc.Corner.X,(int)sc.Corner.Y),5,new MCvScalar(0),5);
-                CvInvoke.Rectangle(myImg, new Rectangle((int)sc.Corner.X -3, (int)sc.Corner.Y-3 ,6, 6), new MCvScalar(25, 255, 55),5 );
-                CvInvoke.PutText(myImg, string.Format("x0={0:0.##}  y0={1:0.##}", sc.Corner.X, sc.Corner.Y), new Point((int)sc.Corner.X +20, (int)sc.Corner.Y - 10), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
-                //CvInvoke.PutText(remapImg, string.Format("x={0:0.##}  y=`{1:0.##}", sc.Corner.X, sc.Corner.Y), new Point((int)sc.Corner.X - 60, (int)sc.Corner.Y + 20), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
-                CvInvoke.PutText(myImg, s2, new Point((int)sc.Corner.X, (int)sc.Corner.Y - 40), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 255), 2);
-                //CvInvoke.PutText(remapImg, s2, new Point((int)sc.Corner.X - 80, (int)sc.Corner.Y + 40), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 0, 255), 1);
-            }
+            //if (sc.Corner.X != -65536)
+            //{
+            //    //CvInvoke.Circle(remapImg,new Point((int)sc.Corner.X,(int)sc.Corner.Y),5,new MCvScalar(0),5);
+            //    CvInvoke.Rectangle(myImg, new Rectangle((int)sc.Corner.X -3, (int)sc.Corner.Y-3 ,6, 6), new MCvScalar(25, 255, 55),5 );
+            //    CvInvoke.PutText(myImg, string.Format("x0={0:0.##}  y0={1:0.##}", sc.Corner.X, sc.Corner.Y), new Point((int)sc.Corner.X +20, (int)sc.Corner.Y - 10), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+            //    //CvInvoke.PutText(remapImg, string.Format("x={0:0.##}  y=`{1:0.##}", sc.Corner.X, sc.Corner.Y), new Point((int)sc.Corner.X - 60, (int)sc.Corner.Y + 20), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+            //    CvInvoke.PutText(myImg, s2, new Point((int)sc.Corner.X, (int)sc.Corner.Y - 40), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 255), 2);
+            //    //CvInvoke.PutText(remapImg, s2, new Point((int)sc.Corner.X - 80, (int)sc.Corner.Y + 40), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 0, 255), 1);
+            //}
 
             pictureBox1.Image = myImg.ToBitmap();
             pictureBox2.Image = remapImg.ToBitmap();
@@ -208,6 +208,9 @@ namespace HoughCramerCornerTest
         /// <param name="e"></param>
         private void btnMethodCal_Click(object sender, EventArgs e)
         {
+            pictureBox1.Image = null;
+            pictureBox2.Image = null;
+
             btnCaptureImg.Enabled = false;
             OpenFileDialog openFile = new OpenFileDialog();
             if (openFile.ShowDialog() == DialogResult.OK)
@@ -219,19 +222,41 @@ namespace HoughCramerCornerTest
             {
                 return;
             }
-            //TODO:处理图像
-            cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap);
-            if (cornerPointK.Corner.X==-1||cornerPointK.Corner.Y==-1)
-            {
-                MessageBox.Show("未找到角点");
-            }
-            CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
+            ////TODO:处理图像
+            //cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap);
+            ////if (cornerPointK.Corner.X==-1||cornerPointK.Corner.Y==-1)
+            ////{
+            ////    MessageBox.Show("未找到角点");
+            ////}
             //CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
-            CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner.X, cornerPointK.Corner.Y), new Point((int)cornerPointK.Corner.X - 60, (int)cornerPointK.Corner.Y + 20), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+            ////CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
             //CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner.X, cornerPointK.Corner.Y), new Point((int)cornerPointK.Corner.X - 60, (int)cornerPointK.Corner.Y + 20), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
-            txtK1.Text = "LineK1 = "+cornerPointK.LineK1.ToString()+"====="+"角点X:"+cornerPointK.Corner.X;
-            txtK2.Text = "LineK2 = " + cornerPointK.LineK2.ToString() + "=====" + "角点Y:" + cornerPointK.Corner.Y;
+            ////CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner.X, cornerPointK.Corner.Y), new Point((int)cornerPointK.Corner.X - 60, (int)cornerPointK.Corner.Y + 20), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+            //txtK1.Text = "LineK1 = "+cornerPointK.LineK1.ToString()+"====="+"角点X:"+cornerPointK.Corner.X;
+            //txtK2.Text = "LineK2 = " + cornerPointK.LineK2.ToString() + "=====" + "角点Y:" + cornerPointK.Corner.Y;
+
+            //TODO:处理图像
+            cornerPointK = detectCorner.GetCornerAndK(myImg.ToBitmap());
+
+            LineSegment2D[] lines = detectCorner.GetLinesByHough(myImg.Bitmap);
+            foreach (LineSegment2D line in lines)
+            {
+                myImg.Draw(line, new Bgr(Color.Red), 3);
+                detectCorner.binaryImg.Draw(line, new Gray(125), 3);
+            }
+            for (int c = 0; c < cornerPointK.Corner.Count; c++)
+            {
+                CvInvoke.Circle(myImg, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 4, new MCvScalar(0, 255, 0), 3);
+                CvInvoke.Circle(myImg, new Point((int)cornerPointK.Center.X, (int)cornerPointK.Center.Y), 4, new MCvScalar(255, 255, 0), 3);
+                //CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
+                CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y),
+                    new Point((int)cornerPointK.Corner[c].X - 60, (int)cornerPointK.Corner[c].Y + 20), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+
+                CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Center.X, cornerPointK.Center.Y),
+                    new Point((int)cornerPointK.Center.X - 60, (int)cornerPointK.Center.Y + 80), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+            }
             pictureBox1.Image = myImg.ToBitmap();
+            pictureBox2.Image = detectCorner.binaryImg.ToBitmap();
         }
 
         private void Form1_Load(object sender, EventArgs e)

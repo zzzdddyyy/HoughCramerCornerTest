@@ -36,7 +36,7 @@ namespace HoughCramerCornerTest
         private Image<Bgr, byte> myImg;
         private Image<Gray, byte> grayImg;//灰度图
         private Image<Gray, byte> remapImg;
-        private Image<Gray, byte> binaryImg;//二值化图
+        public Image<Gray, byte> binaryImg;//二值化图
         private Image<Gray, byte> edageImg;//边缘图
 
         readonly Mat kernelClosing = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(7, 7), new Point(3, 3));//运算核
@@ -47,7 +47,7 @@ namespace HoughCramerCornerTest
         /// </summary>
         /// <param name="img"></param>
         /// <returns></returns>
-        private LineSegment2D[] GetLinesByHough(Bitmap img)
+        public LineSegment2D[] GetLinesByHough(Bitmap img)
         {
             //获取畸变矩阵
             GetCamParams();
@@ -69,7 +69,7 @@ namespace HoughCramerCornerTest
             }
             //二值化
             binaryImg = remapImg.CopyBlank();//创建一张和灰度图一样大小的画布
-            CvInvoke.Threshold(remapImg, binaryImg, 250, 255, ThresholdType.Binary);
+            CvInvoke.Threshold(grayImg, binaryImg, 250, 255, ThresholdType.Binary);
             //Closing
             Image<Gray, byte> closingImg = binaryImg.CopyBlank();//闭运算后图像
             CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Close, kernelClosing, new Point(-1, -1), 1, BorderType.Default, new MCvScalar(255, 0, 0, 255));
@@ -86,8 +86,8 @@ namespace HoughCramerCornerTest
                 1, //Distance resolution in pixel-related units
                 Math.PI / 180.0, //Angle resolution measured in radians.
                 80, //threshold
-                50, //min Line width
-                30); //gap between lines);
+                100, //min Line width
+                10); //gap between lines);
             #endregion
             return lines;
         }
@@ -125,29 +125,21 @@ namespace HoughCramerCornerTest
             GetLinesByHough(img);
             SegmentsClass sc = new SegmentsClass(lines);
             
-            List<Segment> LS = sc.GroupLines(50, 3);
+            List<Segment> LS = sc.GroupLines(20, 3);
 
-            
-            if (LS.Count==2)
+            if (LS.Count != 0)
             {
                 cornerPointK.Corner = sc.Corner;
                 cornerPointK.LineK1 = LS[0].az;
                 cornerPointK.LineK2 = LS[1].az;
+                cornerPointK.Center = new PointF(cornerPointK.Corner.Average(a => a.X), cornerPointK.Corner.Average(a => a.Y));
             }
             else
             {
-                cornerPointK.Corner = new PointF(-1,-1);
+                cornerPointK.Corner = new List<PointF>() { new PointF(-1f, -1f) };
                 cornerPointK.LineK1 = Double.NaN;
                 cornerPointK.LineK2 = Double.NaN;
             }
-
-            //=======以下算法为小海绵使用=======
-            double minK = Math.Abs(cornerPointK.LineK1) < Math.Abs(cornerPointK.LineK2)
-                ? cornerPointK.LineK1
-                : cornerPointK.LineK2;
-            double theta = Math.Atan(minK) * 57.3;
-            cornerPointK.Center =new PointF((float)(cornerPointK.Corner.X + 0.5 * wight * Math.Cos(theta) - 0.5 * hight * Math.Sin(theta)),
-                (float)(cornerPointK.Corner.Y + 0.5 * wight * Math.Sin(theta) +0.5 * hight * Math.Cos(theta)));
             return cornerPointK;
         }
     }
@@ -158,23 +150,24 @@ namespace HoughCramerCornerTest
     public class CornerPointK
     {
         public PointF Center { get; set; }
-        public PointF Corner { get; set; }
+        public List<PointF> Corner { get; set; }
         public double LineK1 { get; set; }
         public double LineK2 { get; set; }
     }
 
     /// <summary>
     /// 线段处理类
-    /// CopyRight:XDD
+    /// CopyRight:ZDY
     /// </summary>
     class SegmentsClass
     {
-        public PointF Corner = new PointF(-1f, -1f);//角点生成无效时,返回此值
+        public List<PointF> Corner = new List<PointF>();//角点生成无效时,返回此值
 
         public int num = 0;//输入线段数目
         List<Segment> ss = new List<Segment>();//线段集合1
         List<Segment> mySegment = new List<Segment>();//线段集合2
-
+        Dictionary<Segment, int> mySegmentDic = new Dictionary<Segment, int>();//分组线段
+        int k = 0;//记录线段种类
         /// <summary>
         /// 线段处理类--构造函数
         /// </summary>
@@ -210,9 +203,9 @@ namespace HoughCramerCornerTest
                 B = -dx;
                 C = dx * y1 - dy * x1;
 
-                //double q = Math.Atan2(dy, dx);
-                //az = q >= 0 ? q : (Math.PI + q);//归结到 0--PI 范围内
-                az = dy / dx;
+                double q = Math.Atan2(dy, dx);
+                az = q >= 0 ? q : (Math.PI + q);//归结到 0--PI 范围内
+                //az = dy / dx;
                 ro = Math.Abs(C) / (Math.Sqrt(A * A + B * B));
 
                 a = 65536;
@@ -229,7 +222,13 @@ namespace HoughCramerCornerTest
                 Segment st = new Segment(dx, dy, az, ro, A, B, C, a, b);
                 ss.Add(st);
             }
-
+            List<Segment> s0 = ss.OrderBy(o => o.az).OrderBy(o => o.ro).ToList();//按照方位角--极径排序
+            //File.Delete("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt");
+            //for (int i = 0; i < ss.Count; i++)
+            //{
+            //    File.AppendAllText("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt", i + "\t" + s0[i].A + "\t" + s0[i].B + "\t\t" + s0[i].C
+            //         + "\t" + s0[i].az + "\t" + s0[i].ro + "\t\t\t" + s0[i].a + "\t\t\t" + s0[i].b + "\t\t" + s0[i].dx + "\t\t" + s0[i].dy + "\r\n");
+            //}
         }
 
         /// <summary>
@@ -240,51 +239,107 @@ namespace HoughCramerCornerTest
         /// <returns>分组后的线段集,仅等于二条时,继续计算出角点</returns>
         public List<Segment> GroupLines(int Distance2origin, int AngleTolerance)
         {
-            List<Segment> s0 = ss.OrderBy(o => o.az).OrderBy(o => o.ro).ToList();//按照方位角--极径排序
+            #region 两条线相交分组
+            //List<Segment> s0 = ss.OrderBy(o => o.az).OrderBy(o => o.ro).ToList();//按照方位角--极径排序
+            //File.Delete("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt");
+            //for (int i = 0; i < ss.Count; i++)
+            //{
+            //    File.AppendAllText("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt", i + "\t" + s0[i].A + "\t" + s0[i].B + "\t\t" + s0[i].C
+            //        + "\t" + s0[i].az + "\t" + s0[i].ro + "\t\t\t" + s0[i].a + "\t\t\t" + s0[i].b + "\t\t" + s0[i].dx + "\t\t" + s0[i].dy + "\r\n");
+            //}
+            //List<Segment> LS = new List<Segment>();
+            //List<List<Segment>> LLS = new List<List<Segment>>();
 
-            List<Segment> LS = new List<Segment>();
-            List<List<Segment>> LLS = new List<List<Segment>>();
+            //Segment n0 = s0[0];
+            //LS.Add(n0);
 
-            Segment n0 = s0[0];
-            LS.Add(n0);
+            //for (int i = 1; i < s0.Count; i++)
+            //{
+            //    Segment n1 = s0[i - 1];
+            //    Segment n2 = s0[i];
+            //    if (Math.Abs(n1.ro - n2.ro) < Distance2origin && Math.Abs(Math.Atan(n1.az) - Math.Atan(n2.az)) * 57.3 < AngleTolerance
+            //        && Math.Abs(n1.a - n2.a) < 100)
+            //    {
+            //        LS.Add(n2);
+            //    }
+            //    else
+            //    {
+            //        LLS.Add(LS);
+            //        LS = new List<Segment>();
+            //        LS.Add(n2);
+            //    }
+            //}
+            //LLS.Add(LS);
+            //for (int j = 0; j < LLS.Count; j++)
+            //{
+            //    Segment gSegment = new Segment();
+            //    gSegment.az = LLS[j].Average(o => o.az);
+            //    gSegment.ro = LLS[j].Average(o => o.ro);
+            //    gSegment.A = LLS[j].Average(o => o.A);
+            //    gSegment.B = LLS[j].Average(o => o.B);
+            //    gSegment.C = LLS[j].Average(o => o.C);
+            //    gSegment.a = LLS[j].Average(o => o.a);
+            //    gSegment.b = LLS[j].Average(o => o.b);
+            //    mySegment.Add(gSegment);
+            //} 
+            #endregion
 
-            for (int i = 1; i < s0.Count; i++)
+            #region N线相交分组
+            foreach (var line in ss)
             {
-                Segment n1 = s0[i - 1];
-                Segment n2 = s0[i];
-                if (Math.Abs(n1.ro - n2.ro) < Distance2origin &&Math.Abs(Math.Atan(n1.az)- Math.Atan(n2.az))*57.3 < AngleTolerance )
-                {
-                    LS.Add(n2);
-                }
-                else
-                {
-                    LLS.Add(LS);
-                    LS = new List<Segment>();
-                    LS.Add(n2);
-                }
+                mySegmentDic.Add(line, -1);//全部标记为-1
             }
-            LLS.Add(LS);
 
 
-
-            for (int j = 0; j < LLS.Count; j++)
+            while (mySegmentDic.ContainsValue(-1))
+            {
+                Segment pinSegment = new Segment();
+                int count = 0;
+                int num = mySegmentDic.Count(a => a.Value == -1);//记录字典中标记为-1的线段数量
+                Segment[] keySegments = new Segment[num];//储存标记为-1的线段的数组
+                var plst = mySegmentDic.Where(a => a.Value == -1).Select(a => a.Key);//筛选出字典中标记为-1的线段
+                keySegments = plst.ToArray();//把所有-1的Segment转为数组
+                Segment n1 = keySegments[0];
+                mySegmentDic[n1] = k;//把数组中第一个线段标记为k
+                for (int i = 1; i < num; i++)//遍历剩下的标记为-1的线段
+                {
+                    if (mySegmentDic[keySegments[i]] == -1)
+                    {
+                        Segment n2 = keySegments[i];
+                        if (Math.Abs(n1.ro - n2.ro) < Distance2origin && Math.Abs(n1.az - n2.az) * 57.3 < AngleTolerance)
+                        {
+                            mySegmentDic[keySegments[i]] = k;
+                        }
+                        count++;
+                    }
+                }
+                k++;
+            }
+            for (int j = 0; j < k; j++)
             {
                 Segment gSegment = new Segment();
-                gSegment.az = LLS[j].Average(o => o.az);
-                gSegment.ro = LLS[j].Average(o => o.ro);
-                gSegment.A = LLS[j].Average(o => o.A);
-                gSegment.B = LLS[j].Average(o => o.B);
-                gSegment.C = LLS[j].Average(o => o.C);
-                gSegment.a = LLS[j].Average(o => o.a);
-                gSegment.b = LLS[j].Average(o => o.b);
+                gSegment.az = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(a => a.az);
+                gSegment.ro = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.ro);
+                gSegment.A = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.A);
+                gSegment.B = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.B);
+                gSegment.C = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.C);
+                gSegment.a = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.a);
+                gSegment.b = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.b);
+
                 mySegment.Add(gSegment);
             }
-
-            if (mySegment.Count == 2)
+            #endregion
+            if (mySegment[0].az - mySegment[1].az < 0.3)
             {
-                getCorner();
+                Segment temp = mySegment[1];
+                mySegment[1] = mySegment[2];
+                mySegment[2] = temp;
             }
-
+            //if (mySegment.Count == 4)
+            //{
+            //    getCorner();
+            //}
+            getCorner();
             return mySegment;
         }
 
@@ -293,22 +348,24 @@ namespace HoughCramerCornerTest
         /// </summary>
         public void getCorner()
         {
-            double A1 = mySegment[0].A;
-            double B1 = mySegment[0].B;
-            double C1 = mySegment[0].C;
-
-            double A2 = mySegment[1].A;
-            double B2 = mySegment[1].B;
-            double C2 = mySegment[1].C;
-
-            double D = A1 * B2 - A2 * B1;
-            double Dx = B1 * C2 - B2 * C1;
-            double Dy = A2 * C1 - A1 * C2;
-
-            if (D != 0)
+            for (int seg = 0; seg < mySegment.Count; seg++)
             {
-                Corner.X = (float)(Dx / D);
-                Corner.Y = (float)(Dy / D);
+                double A1 = mySegment[seg].A;
+                double B1 = mySegment[seg].B;
+                double C1 = mySegment[seg].C;
+
+                double A2 = mySegment[(seg + 1) % mySegment.Count].A;
+                double B2 = mySegment[(seg + 1) % mySegment.Count].B;
+                double C2 = mySegment[(seg + 1) % mySegment.Count].C;
+
+                double D = A1 * B2 - A2 * B1;
+                double Dx = B1 * C2 - B2 * C1;
+                double Dy = A2 * C1 - A1 * C2;
+                if (D != 0)
+                {
+                    PointF tempCorner = new PointF((float)(Dx / D), (float)(Dy / D));
+                    Corner.Add(tempCorner);
+                }
             }
         }
 
