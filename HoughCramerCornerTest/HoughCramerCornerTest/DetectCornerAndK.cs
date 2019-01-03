@@ -19,8 +19,8 @@ namespace HoughCramerCornerTest
         private LineSegment2D[] lines;
         CornerPointK cornerPointK = new CornerPointK();
 
-        private const int width = 1280;      //相机分辨率
-        private const int height = 1024;
+        public const int width = 1280;      //相机分辨率
+        public const int height = 1024;
         private Size imageSize = new Size(width, height);//图像的大小
 
         private Matrix<double> cameraMatrix = new Matrix<double>(3, 3);//相机内部参数
@@ -69,7 +69,7 @@ namespace HoughCramerCornerTest
             }
             //二值化
             binaryImg = remapImg.CopyBlank();//创建一张和灰度图一样大小的画布
-            CvInvoke.Threshold(grayImg, binaryImg, 250, 255, ThresholdType.Binary);
+            CvInvoke.Threshold(grayImg, binaryImg, 180, 255, ThresholdType.Binary);
             //Closing
             Image<Gray, byte> closingImg = binaryImg.CopyBlank();//闭运算后图像
             CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Close, kernelClosing, new Point(-1, -1), 1, BorderType.Default, new MCvScalar(255, 0, 0, 255));
@@ -125,13 +125,13 @@ namespace HoughCramerCornerTest
             GetLinesByHough(img);
             SegmentsClass sc = new SegmentsClass(lines);
             
-            List<Segment> LS = sc.GroupLines(20, 3);
+            List<Segment> LS = sc.GroupLines(50, 3);
 
             if (LS.Count != 0)
             {
                 cornerPointK.Corner = sc.Corner;
                 cornerPointK.LineK1 = LS[0].az;
-                cornerPointK.LineK2 = LS[1].az;
+                cornerPointK.LineK2 = LS[1].az==LS[0].az?LS[2].az:LS[1].az;
                 cornerPointK.Center = new PointF(cornerPointK.Corner.Average(a => a.X), cornerPointK.Corner.Average(a => a.Y));
             }
             else
@@ -139,6 +139,7 @@ namespace HoughCramerCornerTest
                 cornerPointK.Corner = new List<PointF>() { new PointF(-1f, -1f) };
                 cornerPointK.LineK1 = Double.NaN;
                 cornerPointK.LineK2 = Double.NaN;
+                cornerPointK.Center = new PointF(-1, -1);
             }
             return cornerPointK;
         }
@@ -306,7 +307,7 @@ namespace HoughCramerCornerTest
                     if (mySegmentDic[keySegments[i]] == -1)
                     {
                         Segment n2 = keySegments[i];
-                        if (Math.Abs(n1.ro - n2.ro) < Distance2origin && Math.Abs(n1.az - n2.az) * 57.3 < AngleTolerance)
+                        if (Math.Abs(n1.ro - n2.ro) < Distance2origin && Math.Abs(n1.az - n2.az) *180f / Math.PI < AngleTolerance && Math.Abs(n1.a - n2.a) < 80)
                         {
                             mySegmentDic[keySegments[i]] = k;
                         }
@@ -329,7 +330,7 @@ namespace HoughCramerCornerTest
                 mySegment.Add(gSegment);
             }
             #endregion
-            if (mySegment[0].az - mySegment[1].az < 0.3)
+            if (Math.Abs(mySegment[0].az - mySegment[1].az) < 0.3)
             {
                 Segment temp = mySegment[1];
                 mySegment[1] = mySegment[2];
@@ -339,14 +340,14 @@ namespace HoughCramerCornerTest
             //{
             //    getCorner();
             //}
-            getCorner();
+            getCorner(1.5,1280,1024);
             return mySegment;
         }
 
         /// <summary>
         /// 用克莱姆法则解二元一次方程组,计算角点
         /// </summary>
-        public void getCorner()
+        public void getCorner(double factor,int wight = 1280, int hight = 1024)
         {
             for (int seg = 0; seg < mySegment.Count; seg++)
             {
@@ -364,7 +365,11 @@ namespace HoughCramerCornerTest
                 if (D != 0)
                 {
                     PointF tempCorner = new PointF((float)(Dx / D), (float)(Dy / D));
-                    Corner.Add(tempCorner);
+                    //判断是否溢出*1.5
+                    if (tempCorner.X>0&&tempCorner.X<wight * factor && tempCorner.Y>0&&tempCorner.Y<hight * factor)
+                    {
+                        Corner.Add(tempCorner);
+                    }
                 }
             }
         }
