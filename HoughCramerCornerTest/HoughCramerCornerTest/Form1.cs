@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
@@ -14,6 +15,8 @@ using Emgu.CV.Util;
 using Emgu.Util;
 using Emgu.CV.UI;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace HoughCramerCornerTest
 {
@@ -23,8 +26,8 @@ namespace HoughCramerCornerTest
         CornerPointK cornerPointK = new CornerPointK();
 
         private LineSegment2D[] lines;
-        private const int width = 1280;      //相机分辨率
-        private const int height = 1024;
+        private const int width = 5472;      //相机分辨率
+        private const int height = 3648;
         private Size imageSize = new Size(width, height);//图像的大小
 
         private Matrix<double> cameraMatrix = new Matrix<double>(3, 3);//相机内部参数
@@ -43,7 +46,9 @@ namespace HoughCramerCornerTest
         private Image<Gray, byte> binaryImg;//二值化图
         private Image<Gray, byte> edageImg;//边缘图
 
-        readonly Mat kernelClosing = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(7, 7), new Point(3, 3));//运算核
+        Rectangle ROI = new Rectangle(new Point(900, 0), new Size(3400, 3648));
+
+        readonly Mat kernelClosing = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(-1, -1));//运算核
 
         public Form1()
         {
@@ -157,7 +162,7 @@ namespace HoughCramerCornerTest
                 //CvInvoke.Line(remapImg, line.P1, line.P2, new MCvScalar(0), 5);
             }
             SegmentsClass sc = new SegmentsClass(lines);
-            List<Segment> LS = sc.GroupLines(5, 3);
+            List<Segment> LS = sc.GroupLines(50, 3,170);
 
             string s = ""; string s2 = "";
             for (int k = 0; k < LS.Count; k++)
@@ -208,14 +213,16 @@ namespace HoughCramerCornerTest
         /// <param name="e"></param>
         private void btnMethodCal_Click(object sender, EventArgs e)
         {
+            //释放内存
+            ClearMemory();
+
             pictureBox1.Image = null;
             pictureBox2.Image = null;
             btnCaptureImg.Enabled = false;
             OpenFileDialog openFile = new OpenFileDialog();
             if (openFile.ShowDialog() == DialogResult.OK)
             {
-                myImg = new Image<Bgr, Byte>(openFile.FileName);
-              
+               myImg= new Image<Bgr, Byte>(openFile.FileName);
             }
             else
             {
@@ -235,38 +242,82 @@ namespace HoughCramerCornerTest
             //txtK2.Text = "LineK2 = " + cornerPointK.LineK2.ToString() + "=====" + "角点Y:" + cornerPointK.Corner.Y;
 
             //TODO:处理图像
+            DateTime beforDT = DateTime.Now;//计时开始
+
             cornerPointK = detectCorner.GetCornerAndK(myImg.ToBitmap());
+
+            DateTime afterDT = DateTime.Now;
+            TimeSpan ts = afterDT.Subtract(beforDT);//计时结束
+            lblSpanTime.Text = "HK算法耗时：" + ts+"S";
 
             LineSegment2D[] lines = detectCorner.GetLinesByHough(myImg.Bitmap);
             foreach (LineSegment2D line in lines)
             {
-                //myImg.Draw(line, new Bgr(Color.Red), 3);
-                detectCorner.binaryImg.Draw(line, new Gray(125), 3);
+                myImg.Draw(line, new Bgr(Color.Red), 10);
+                //detectCorner.binaryImg.Draw(line, new Gray(125), 3);
             }
+
+            Image<Bgr, byte> roiImage = GetROI(myImg, ROI);
+
             for (int c = 0; c < cornerPointK.Corner.Count; c++)
             {
-                CvInvoke.Circle(myImg, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 4, new MCvScalar(0, 25, 255), 4);
-               
+                //设置伪彩色
+                CvInvoke.Circle(roiImage, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 10, new MCvScalar(0,0, 255), 10);
+
                 //CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
-                CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y),
-                    new Point((int)cornerPointK.Corner[c].X+30 , (int)cornerPointK.Corner[c].Y + 20), FontFace.HersheyPlain, 3, new MCvScalar(0, 25, 255), 3);
+                CvInvoke.PutText(roiImage, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y),
+                    new Point((int)cornerPointK.Corner[c].X + 30, (int)cornerPointK.Corner[c].Y + 20), FontFace.HersheyPlain, 10, new MCvScalar(0, 25, 255), 10);
+                txtK2.Text += string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y) + "\t\t\t";
             }
-            CvInvoke.Circle(myImg, new Point((int)cornerPointK.Center.X, (int)cornerPointK.Center.Y), 4, new MCvScalar(255, 255, 0), 4);
-            CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Center.X, cornerPointK.Center.Y),
-            new Point((int)cornerPointK.Center.X - 60, (int)cornerPointK.Center.Y + 80), FontFace.HersheyPlain, 2, new MCvScalar(0, 255, 0), 1);
+            CvInvoke.Circle(roiImage, new Point((int)cornerPointK.Center.X, (int)cornerPointK.Center.Y), 14, new MCvScalar(255, 255, 0), 14);
+            CvInvoke.PutText(roiImage, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Center.X, cornerPointK.Center.Y),
+            new Point((int)cornerPointK.Center.X - 60, (int)cornerPointK.Center.Y + 80), FontFace.HersheyPlain, 12, new MCvScalar(255, 255, 0), 11);
 
             //临时用
-            CvInvoke.PutText(myImg, string.Format("theta1={0:0.##}  theta2={1:0.##}", cornerPointK.LineK1*180f/Math.PI, cornerPointK.LineK2 * 180f / Math.PI),
-                    new Point((int)cornerPointK.Corner[0].X-120 , (int)cornerPointK.Corner[0].Y-30 ), FontFace.HersheyPlain, 3, new MCvScalar(255, 2, 0), 3);
-            txtK1.Text = string.Format("K1={00:0.####}", cornerPointK.LineK1 * 180f / Math.PI);
-            txtK2.Text = string.Format("K2={00:0.####}", cornerPointK.LineK2 * 180f / Math.PI);
-            pictureBox1.Image = myImg.ToBitmap();
-            pictureBox2.Image = detectCorner.binaryImg.ToBitmap();
+            CvInvoke.PutText(roiImage, string.Format("theta1={0:0.##}  theta2={1:0.##}", cornerPointK.LineK1 * 180f / Math.PI, cornerPointK.LineK2 * 180f / Math.PI),
+                    new Point((int)cornerPointK.Corner[0].X - 120, (int)cornerPointK.Corner[0].Y - 30), FontFace.HersheyPlain, 2, new MCvScalar(255, 2, 0), 2);
+            txtK1.Text = string.Format("K1={00:0.####}", cornerPointK.LineK1 * 180f / Math.PI) + "\t\t" + string.Format("K2={00:0.####}", cornerPointK.LineK2 * 180f / Math.PI);
+
+            pictureBox1.Image = roiImage.ToBitmap();
+            //pictureBox2.Image = detectCorner.binaryImg.ToBitmap();
+            pictureBox2.Image = myImg.ToBitmap();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             
+        }
+
+
+        [DllImport("kernel32.dll", EntryPoint = "SetProcessWorkingSetSize")]
+        public static extern int SetProcessWorkingSetSize(IntPtr process, int minSize, int maxSize);
+
+        /// <summary>
+        /// 释放内存
+        /// </summary>
+        public static void ClearMemory()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, -1, -1);
+            }
+        }
+
+        /// <summary>
+        /// 获取ROI
+        /// </summary>
+        /// <param name="image">需裁剪的原图</param>
+        /// <param name="rect">裁剪留下的ROI大小</param>
+        /// <returns>ROI</returns>
+        private Image<Bgr, byte> GetROI(Image<Bgr, byte> image, Rectangle rect)
+        {
+            //程序中image是原始图像，类型Image<Gray, byte>，rectangle是矩形，CropImage是截得的图像。
+            Image<Bgr, byte> Sub = image.GetSubRect(rect);//若计算校正后的，需把grayImg==>remapImg
+            Image<Bgr, byte> CropImage = new Image<Bgr, byte>(Sub.Size);
+            CvInvoke.cvCopy(Sub, CropImage, IntPtr.Zero);
+            return CropImage;
         }
     }
 }
