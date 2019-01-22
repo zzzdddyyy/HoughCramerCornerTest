@@ -42,3 +42,5 @@ F:\GitHub\HoughCramerCornerTest\HoughCramerCornerTest\HoughCramerCornerTest\obj\
 F:\GitHub\HoughCramerCornerTest\HoughCramerCornerTest\HoughCramerCornerTest\obj\x86\Debug\HoughCramerCornerTest.csproj.CopyComplete
 F:\GitHub\HoughCramerCornerTest\HoughCramerCornerTest\HoughCramerCornerTest\obj\x86\Debug\HoughCramerCornerTest.exe
 F:\GitHub\HoughCramerCornerTest\HoughCramerCornerTest\HoughCramerCornerTest\obj\x86\Debug\HoughCramerCornerTest.pdb
+F:\GitHub\HoughCramerCornerTest\HoughCramerCornerTest\HoughCramerCornerTest\bin\x86\Debug\ImageProcessing.dll
+F:\GitHub\HoughCramerCornerTest\HoughCramerCornerTest\HoughCramerCornerTest\bin\x86\Debug\ImageProcessing.pdb

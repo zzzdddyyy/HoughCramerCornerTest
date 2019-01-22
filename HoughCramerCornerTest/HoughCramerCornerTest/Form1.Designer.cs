@@ -43,7 +43,7 @@
             // pictureBox1
             // 
             this.pictureBox1.Location = new System.Drawing.Point(8, 8);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(853, 640);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -54,7 +54,7 @@
             // 
             this.btnCaptureImg.Font = new System.Drawing.Font("宋体", 13.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.btnCaptureImg.Location = new System.Drawing.Point(639, 668);
-            this.btnCaptureImg.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnCaptureImg.Margin = new System.Windows.Forms.Padding(2);
             this.btnCaptureImg.Name = "btnCaptureImg";
             this.btnCaptureImg.Size = new System.Drawing.Size(221, 69);
             this.btnCaptureImg.TabIndex = 1;
@@ -65,7 +65,7 @@
             // pictureBox2
             // 
             this.pictureBox2.Location = new System.Drawing.Point(865, 8);
-            this.pictureBox2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.pictureBox2.Margin = new System.Windows.Forms.Padding(2);
             this.pictureBox2.Name = "pictureBox2";
             this.pictureBox2.Size = new System.Drawing.Size(853, 640);
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -76,7 +76,7 @@
             // 
             this.btnMethodCal.Font = new System.Drawing.Font("宋体", 13.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.btnMethodCal.Location = new System.Drawing.Point(1453, 668);
-            this.btnMethodCal.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnMethodCal.Margin = new System.Windows.Forms.Padding(2);
             this.btnMethodCal.Name = "btnMethodCal";
             this.btnMethodCal.Size = new System.Drawing.Size(266, 69);
             this.btnMethodCal.TabIndex = 3;
@@ -87,7 +87,7 @@
             // txtK1
             // 
             this.txtK1.Location = new System.Drawing.Point(865, 651);
-            this.txtK1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtK1.Margin = new System.Windows.Forms.Padding(2);
             this.txtK1.Multiline = true;
             this.txtK1.Name = "txtK1";
             this.txtK1.Size = new System.Drawing.Size(585, 45);
@@ -96,7 +96,7 @@
             // txtK2
             // 
             this.txtK2.Location = new System.Drawing.Point(865, 698);
-            this.txtK2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.txtK2.Margin = new System.Windows.Forms.Padding(2);
             this.txtK2.Multiline = true;
             this.txtK2.Name = "txtK2";
             this.txtK2.Size = new System.Drawing.Size(585, 45);
@@ -121,9 +121,9 @@
             this.label1.ForeColor = System.Drawing.Color.Blue;
             this.label1.Location = new System.Drawing.Point(867, 13);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(292, 27);
+            this.label1.Size = new System.Drawing.Size(252, 27);
             this.label1.TabIndex = 7;
-            this.label1.Text = "经形态学处理后的二值化图像：";
+            this.label1.Text = "畸变校正后的二值化图像：";
             // 
             // Form1
             // 
@@ -139,7 +139,7 @@
             this.Controls.Add(this.pictureBox2);
             this.Controls.Add(this.btnCaptureImg);
             this.Controls.Add(this.pictureBox1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);

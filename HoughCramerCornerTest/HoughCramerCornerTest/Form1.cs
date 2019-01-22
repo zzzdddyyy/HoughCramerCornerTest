@@ -18,12 +18,17 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
+using ImageProcessing;
+
 namespace HoughCramerCornerTest
 {
     public partial class Form1 : Form
     {
         DetectCornerAndK detectCorner = new DetectCornerAndK();
         CornerPointK cornerPointK = new CornerPointK();
+
+        ////使用DLL
+        //DetectCenterAndSlop detectCenterAndSlop = new DetectCenterAndSlop();
 
         private LineSegment2D[] lines;
         private const int width = 5472;      //相机分辨率
@@ -243,44 +248,48 @@ namespace HoughCramerCornerTest
 
             //TODO:处理图像
             DateTime beforDT = DateTime.Now;//计时开始
+            //使用DLL
+            //detectCenterAndSlop.GetCornerAndSlope(myImg.Bitmap,0);
+            //double robotRotated = detectCenterAndSlop.LineK1 < detectCenterAndSlop.LineK2 ? detectCenterAndSlop.LineK1 : detectCenterAndSlop.LineK2;
+            //PointF robotCenter = detectCenterAndSlop.Center;
 
-            cornerPointK = detectCorner.GetCornerAndK(myImg.ToBitmap());
+            cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap, 0);
 
             DateTime afterDT = DateTime.Now;
             TimeSpan ts = afterDT.Subtract(beforDT);//计时结束
             lblSpanTime.Text = "HK算法耗时：" + ts+"S";
 
-            LineSegment2D[] lines = detectCorner.GetLinesByHough(myImg.Bitmap);
-            foreach (LineSegment2D line in lines)
-            {
-                myImg.Draw(line, new Bgr(Color.Red), 10);
-                //detectCorner.binaryImg.Draw(line, new Gray(125), 3);
-            }
+            //LineSegment2D[] lines = detectCorner.GetLinesByHough(myImg.Bitmap,0);
+            //foreach (LineSegment2D line in lines)
+            //{
+            //    myImg.Draw(line, new Bgr(Color.Red), 10);
+            //    //detectCorner.binaryImg.Draw(line, new Gray(125), 3);
+            //}
 
             Image<Bgr, byte> roiImage = GetROI(myImg, ROI);
 
             for (int c = 0; c < cornerPointK.Corner.Count; c++)
             {
                 //设置伪彩色
-                CvInvoke.Circle(roiImage, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 10, new MCvScalar(0,0, 255), 10);
+                CvInvoke.Circle(myImg, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 10, new MCvScalar(0,0, 255), 10);
 
                 //CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
-                CvInvoke.PutText(roiImage, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y),
+                CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y),
                     new Point((int)cornerPointK.Corner[c].X + 30, (int)cornerPointK.Corner[c].Y + 20), FontFace.HersheyPlain, 10, new MCvScalar(0, 25, 255), 10);
                 txtK2.Text += string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y) + "\t\t\t";
             }
-            CvInvoke.Circle(roiImage, new Point((int)cornerPointK.Center.X, (int)cornerPointK.Center.Y), 14, new MCvScalar(255, 255, 0), 14);
-            CvInvoke.PutText(roiImage, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Center.X, cornerPointK.Center.Y),
+            //CvInvoke.Circle(myImg, new Point((int)cornerPointK.Center.X, (int)cornerPointK.Center.Y), 14, new MCvScalar(255, 255, 0), 14);
+            CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Center.X, cornerPointK.Center.Y),
             new Point((int)cornerPointK.Center.X - 60, (int)cornerPointK.Center.Y + 80), FontFace.HersheyPlain, 12, new MCvScalar(255, 255, 0), 11);
 
             //临时用
-            CvInvoke.PutText(roiImage, string.Format("theta1={0:0.##}  theta2={1:0.##}", cornerPointK.LineK1 * 180f / Math.PI, cornerPointK.LineK2 * 180f / Math.PI),
+            CvInvoke.PutText(myImg, string.Format("theta1={0:0.##}  theta2={1:0.##}", cornerPointK.LineK1 * 180f / Math.PI, cornerPointK.LineK2 * 180f / Math.PI),
                     new Point((int)cornerPointK.Corner[0].X - 120, (int)cornerPointK.Corner[0].Y - 30), FontFace.HersheyPlain, 2, new MCvScalar(255, 2, 0), 2);
             txtK1.Text = string.Format("K1={00:0.####}", cornerPointK.LineK1 * 180f / Math.PI) + "\t\t" + string.Format("K2={00:0.####}", cornerPointK.LineK2 * 180f / Math.PI);
-
-            pictureBox1.Image = roiImage.ToBitmap();
-            //pictureBox2.Image = detectCorner.binaryImg.ToBitmap();
-            pictureBox2.Image = myImg.ToBitmap();
+            //txtK1.Text += "\r\n"+"机器人法兰中心旋转角度：" +( robotRotated * 180f / Math.PI).ToString();
+            pictureBox1.Image = myImg.ToBitmap();
+            pictureBox2.Image = detectCorner.binaryImg.ToBitmap();
+            //pictureBox2.Image = myImg.ToBitmap();
         }
 
         private void Form1_Load(object sender, EventArgs e)

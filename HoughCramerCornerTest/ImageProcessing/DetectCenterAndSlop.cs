@@ -9,16 +9,21 @@ using Emgu.CV.Structure;
 using System.Drawing;
 using Emgu.CV.Util;
 
-namespace HoughCramerCornerTest
+namespace ImageProcessing
 {
     /// <summary>
     /// 处理图像获取角点和斜率类
     /// </summary>
-    public class DetectCornerAndK
+    public class DetectCenterAndSlop
     {
+        //字段
+        public PointF Center { get; set; }
+        public List<PointF> Corner { get; set; }
+        public double LineK1 { get; set; }
+        public double LineK2 { get; set; }
+
         #region 全局变量
         private LineSegment2D[] lines;
-        CornerPointK cornerPointK = new CornerPointK();
 
         public const int width = 5472;      //相机分辨率 2000W像素
         public const int height = 3648;
@@ -45,7 +50,7 @@ namespace HoughCramerCornerTest
         private Image<Gray, byte> edageImg;//边缘图
 
         Rectangle ROI = new Rectangle(new Point(900, 0), new Size(3400, 3648));
-        
+
 
         readonly Mat kernelClosing = CvInvoke.GetStructuringElement(ElementShape.Rectangle, new Size(5, 5), new Point(-1, -1));//运算核
         #endregion
@@ -56,14 +61,14 @@ namespace HoughCramerCornerTest
         /// <param name="img"></param>
         /// <param name="cameraID">0=右侧，1=前方</param>
         /// <returns>Hough直线集</returns>
-        public LineSegment2D[] GetLinesByHough(Bitmap img,int cameraID)
+        private LineSegment2D[] GetLinesByHough(Bitmap img, int cameraID)
         {
             #region 灰度处理
             //灰度化
             grayImg = new Image<Gray, byte>(img).PyrDown().PyrUp();
             remapImg = grayImg.CopyBlank();//映射后图像
             //获取畸变参数
-            if (cameraID==0)
+            if (cameraID == 0)
             {
                 GetRightCamParams();
             }
@@ -71,7 +76,7 @@ namespace HoughCramerCornerTest
             {
                 GetFrontCamParams();
             }
-            
+
             //畸变校正
             try
             {
@@ -82,15 +87,15 @@ namespace HoughCramerCornerTest
             {
                 throw (ex);
             }
-            
+
             //Image<Gray, byte> roiBinary = GetROI(grayImg, ROI);//控制是否需要畸变校正
-            
+
             //二值化
             binaryImg = grayImg.CopyBlank();//创建一张和灰度图一样大小的画布
             CvInvoke.Threshold(remapImg, binaryImg, 200, 255, ThresholdType.Binary);//控制是否需要畸变校正
             //Closing
             Image<Gray, byte> closingImg = binaryImg.CopyBlank();//闭运算后图像
-            CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Open, kernelClosing, new Point(-1, -1),5, BorderType.Default, new MCvScalar(255, 0, 0, 255));
+            CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Open, kernelClosing, new Point(-1, -1), 5, BorderType.Default, new MCvScalar(255, 0, 0, 255));
             #endregion
 
             #region 去除白色不相干区域块
@@ -131,7 +136,7 @@ namespace HoughCramerCornerTest
         /// <param name="image">需裁剪的原图</param>
         /// <param name="rect">裁剪留下的ROI大小</param>
         /// <returns>ROI</returns>
-        private Image<Gray,byte> GetROI(Image<Gray,byte> image,Rectangle rect)
+        private Image<Gray, byte> GetROI(Image<Gray, byte> image, Rectangle rect)
         {
             //程序中image是原始图像，类型Image<Gray, byte>，rectangle是矩形，CropImage是截得的图像。
             Image<Gray, byte> Sub = image.GetSubRect(rect);//若计算校正后的，需把grayImg==>remapImg
@@ -167,10 +172,10 @@ namespace HoughCramerCornerTest
             rightCameraTrans[0, 2] = -1.08420217e-19;
             rightCameraTrans[1, 0] = 6.46775302e-01;
             rightCameraTrans[1, 1] = 9.85949589e-03;
-            rightCameraTrans[1,2] = -2.03287907e-20;
-            rightCameraTrans[2,0] = -1.13760054e+03;
-            rightCameraTrans[2,1] = 8.13282071e+02;
-            rightCameraTrans[2,2] = 1.00000000e+00;
+            rightCameraTrans[1, 2] = -2.03287907e-20;
+            rightCameraTrans[2, 0] = -1.13760054e+03;
+            rightCameraTrans[2, 1] = 8.13282071e+02;
+            rightCameraTrans[2, 2] = 1.00000000e+00;
         }
 
         /// <summary>
@@ -212,48 +217,48 @@ namespace HoughCramerCornerTest
         /// </summary>
         /// <param name="img"></param>
         /// <returns></returns>
-        public CornerPointK GetCornerAndK(Bitmap img,int cameraID)
+        public void GetCornerAndSlope(Bitmap img, int cameraID)
         {
-            GetLinesByHough(img,cameraID);
+            GetLinesByHough(img, cameraID);
             SegmentsClass sc = new SegmentsClass(lines);
-            
-            List<Segment> LS = sc.GroupLines(80, 3,170);
+
+            List<Segment> LS = sc.GroupLines(80, 3, 170);
 
             if (LS.Count != 0)
             {
-                cornerPointK.Corner = sc.Corner;
-                cornerPointK.LineK1 = LS[0].az;
-                cornerPointK.LineK2 = LS[1].az==LS[0].az?LS[2].az:LS[1].az;
+                Corner = sc.Corner;
+                LineK1 = LS[0].az;
+                LineK2 = LS[1].az == LS[0].az ? LS[2].az : LS[1].az;
                 //cornerPointK.Center = new PointF(cornerPointK.Corner.Average(a => a.X), cornerPointK.Corner.Average(a => a.Y));
-                Matrix<double> camerCenter = new Matrix<double>(1, 3) {
-                    [0, 0] = cornerPointK.Corner.Average(a => a.X),
-                    [0,1] = cornerPointK.Corner.Average(a => a.Y),
-                    [0,2] =1
-                };
-                if (cameraID==0)
+                Matrix<double> camerCenter = new Matrix<double>(1, 3)
                 {
-                    cornerPointK.Center = new PointF((float.Parse(((camerCenter * rightCameraTrans)[0, 0]).ToString())), (float.Parse(((camerCenter * rightCameraTrans)[0, 1]).ToString())));
+                    [0, 0] = Corner.Average(a => a.X),
+                    [0, 1] = Corner.Average(a => a.Y),
+                    [0, 2] = 1
+                };
+                if (cameraID == 0)
+                {
+                    Center = new PointF((float.Parse(((camerCenter * rightCameraTrans)[0, 0]).ToString())), (float.Parse(((camerCenter * rightCameraTrans)[0, 1]).ToString())));
                 }
                 else
                 {
-                    cornerPointK.Center = new PointF((float.Parse(((camerCenter *frontCameraTrans)[0, 0]).ToString())), (float.Parse(((camerCenter *frontCameraTrans)[0, 1]).ToString())));
+                    Center = new PointF((float.Parse(((camerCenter * frontCameraTrans)[0, 0]).ToString())), (float.Parse(((camerCenter * frontCameraTrans)[0, 1]).ToString())));
                 }
             }
             else
             {
-                cornerPointK.Corner = new List<PointF>() { new PointF(-1f, -1f) };
-                cornerPointK.LineK1 = Double.NaN;
-                cornerPointK.LineK2 = Double.NaN;
-                cornerPointK.Center = new PointF(-1, -1);
+                Corner = new List<PointF>() { new PointF(-1f, -1f) };
+                LineK1 = Double.NaN;
+                LineK2 = Double.NaN;
+                Center = new PointF(-1, -1);
             }
-            return cornerPointK;
         }
     }
 
     /// <summary>
     /// 记录角点坐标和直线斜率类
     /// </summary>
-    public class CornerPointK
+     class CornerPointK
     {
         public PointF Center { get; set; }
         public List<PointF> Corner { get; set; }
@@ -329,12 +334,6 @@ namespace HoughCramerCornerTest
                 ss.Add(st);
             }
             List<Segment> s0 = ss.OrderBy(o => o.az).OrderBy(o => o.ro).ToList();//按照方位角--极径排序
-            //File.Delete("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt");
-            //for (int i = 0; i < ss.Count; i++)
-            //{
-            //    File.AppendAllText("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt", i + "\t" + s0[i].A + "\t" + s0[i].B + "\t\t" + s0[i].C
-            //         + "\t" + s0[i].az + "\t" + s0[i].ro + "\t\t\t" + s0[i].a + "\t\t\t" + s0[i].b + "\t\t" + s0[i].dx + "\t\t" + s0[i].dy + "\r\n");
-            //}
         }
 
         /// <summary>
@@ -343,53 +342,8 @@ namespace HoughCramerCornerTest
         /// <param name="Distance2origin">分组参数1:按线段到原点的距离(如:5像素)</param>
         /// <param name="AngleTolerance">分组参数2:按线段的方位角(如:3度)</param>
         /// <returns>分组后的线段集,仅等于二条时,继续计算出角点</returns>
-        public List<Segment> GroupLines(int Distance2origin, int AngleToleranceMin,int AngleToleranceMax)
+        public List<Segment> GroupLines(int Distance2origin, int AngleToleranceMin, int AngleToleranceMax)
         {
-            #region 两条线相交分组
-            //List<Segment> s0 = ss.OrderBy(o => o.az).OrderBy(o => o.ro).ToList();//按照方位角--极径排序
-            //File.Delete("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt");
-            //for (int i = 0; i < ss.Count; i++)
-            //{
-            //    File.AppendAllText("H:\\BataRobot\\软件算法\\轮廓检测\\Records.txt", i + "\t" + s0[i].A + "\t" + s0[i].B + "\t\t" + s0[i].C
-            //        + "\t" + s0[i].az + "\t" + s0[i].ro + "\t\t\t" + s0[i].a + "\t\t\t" + s0[i].b + "\t\t" + s0[i].dx + "\t\t" + s0[i].dy + "\r\n");
-            //}
-            //List<Segment> LS = new List<Segment>();
-            //List<List<Segment>> LLS = new List<List<Segment>>();
-
-            //Segment n0 = s0[0];
-            //LS.Add(n0);
-
-            //for (int i = 1; i < s0.Count; i++)
-            //{
-            //    Segment n1 = s0[i - 1];
-            //    Segment n2 = s0[i];
-            //    if (Math.Abs(n1.ro - n2.ro) < Distance2origin && Math.Abs(Math.Atan(n1.az) - Math.Atan(n2.az)) * 57.3 < AngleTolerance
-            //        && Math.Abs(n1.a - n2.a) < 100)
-            //    {
-            //        LS.Add(n2);
-            //    }
-            //    else
-            //    {
-            //        LLS.Add(LS);
-            //        LS = new List<Segment>();
-            //        LS.Add(n2);
-            //    }
-            //}
-            //LLS.Add(LS);
-            //for (int j = 0; j < LLS.Count; j++)
-            //{
-            //    Segment gSegment = new Segment();
-            //    gSegment.az = LLS[j].Average(o => o.az);
-            //    gSegment.ro = LLS[j].Average(o => o.ro);
-            //    gSegment.A = LLS[j].Average(o => o.A);
-            //    gSegment.B = LLS[j].Average(o => o.B);
-            //    gSegment.C = LLS[j].Average(o => o.C);
-            //    gSegment.a = LLS[j].Average(o => o.a);
-            //    gSegment.b = LLS[j].Average(o => o.b);
-            //    mySegment.Add(gSegment);
-            //} 
-            #endregion
-
             #region N线相交分组
             foreach (var line in ss)
             {
@@ -412,7 +366,7 @@ namespace HoughCramerCornerTest
                     if (mySegmentDic[keySegments[i]] == -1)
                     {
                         Segment n2 = keySegments[i];
-                        if (Math.Abs(n1.ro - n2.ro) < Distance2origin && (Math.Abs(n1.az - n2.az) *180f / Math.PI < AngleToleranceMin ||Math.Abs(n1.az - n2.az) * 180f / Math.PI > AngleToleranceMax))
+                        if (Math.Abs(n1.ro - n2.ro) < Distance2origin && (Math.Abs(n1.az - n2.az) * 180f / Math.PI < AngleToleranceMin || Math.Abs(n1.az - n2.az) * 180f / Math.PI > AngleToleranceMax))
                         {
                             mySegmentDic[keySegments[i]] = k;
                         }
@@ -433,7 +387,7 @@ namespace HoughCramerCornerTest
                 gSegment.b = mySegmentDic.Where(a => a.Value == j).Select(a => a.Key).Average(o => o.b);
 
                 mySegment.Add(gSegment);
-                 }
+            }
             #endregion
             if (Math.Abs(mySegment[0].az - mySegment[1].az) < 0.5)
             {
@@ -451,7 +405,7 @@ namespace HoughCramerCornerTest
             //{
             //    getCorner();
             //}
-            getCorner(1.5,5472,3648);
+            getCorner(1.5, 5472, 3648);
             return mySegment;
         }
 
@@ -461,7 +415,7 @@ namespace HoughCramerCornerTest
         /// <param name="factor">溢出因子</param>
         /// <param name="wight">图像宽</param>
         /// <param name="hight">图像高</param>
-        private void getCorner(double factor,int wight = 5472, int hight = 3648)
+        private void getCorner(double factor, int wight = 5472, int hight = 3648)
         {
             for (int seg = 0; seg < mySegment.Count; seg++)
             {
@@ -480,7 +434,7 @@ namespace HoughCramerCornerTest
                 {
                     PointF tempCorner = new PointF((float)(Dx / D), (float)(Dy / D));
                     //判断是否溢出*1.5
-                    if (tempCorner.X>0&&tempCorner.X<wight * factor && tempCorner.Y>0&&tempCorner.Y<hight * factor)
+                    if (tempCorner.X > 0 && tempCorner.X < wight * factor && tempCorner.Y > 0 && tempCorner.Y < hight * factor)
                     {
                         Corner.Add(tempCorner);
                     }
