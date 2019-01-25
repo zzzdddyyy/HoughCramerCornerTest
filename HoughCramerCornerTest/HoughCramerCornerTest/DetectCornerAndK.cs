@@ -87,7 +87,7 @@ namespace HoughCramerCornerTest
             
             //二值化
             binaryImg = grayImg.CopyBlank();//创建一张和灰度图一样大小的画布
-            CvInvoke.Threshold(remapImg, binaryImg, 200, 255, ThresholdType.Binary);//控制是否需要畸变校正
+            CvInvoke.Threshold(remapImg, binaryImg, 240, 255, ThresholdType.Binary);//控制是否需要畸变校正
             //Closing
             Image<Gray, byte> closingImg = binaryImg.CopyBlank();//闭运算后图像
             CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Open, kernelClosing, new Point(-1, -1),5, BorderType.Default, new MCvScalar(255, 0, 0, 255));

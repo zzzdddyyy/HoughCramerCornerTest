@@ -21,6 +21,7 @@ namespace ImageProcessing
         public List<PointF> Corner { get; set; }
         public double LineK1 { get; set; }
         public double LineK2 { get; set; }
+        public double RotatedAngle { get; set; }
 
         #region 全局变量
         private LineSegment2D[] lines;
@@ -45,8 +46,8 @@ namespace ImageProcessing
 
         private Image<Bgr, byte> myImg;
         private Image<Gray, byte> grayImg;//灰度图
-        public Image<Gray, byte> remapImg;
-        public Image<Gray, byte> binaryImg;//二值化图
+        private Image<Gray, byte> remapImg;
+        private Image<Gray, byte> binaryImg;//二值化图
         private Image<Gray, byte> edageImg;//边缘图
 
         Rectangle ROI = new Rectangle(new Point(900, 0), new Size(3400, 3648));
@@ -92,7 +93,7 @@ namespace ImageProcessing
 
             //二值化
             binaryImg = grayImg.CopyBlank();//创建一张和灰度图一样大小的画布
-            CvInvoke.Threshold(remapImg, binaryImg, 200, 255, ThresholdType.Binary);//控制是否需要畸变校正
+            CvInvoke.Threshold(remapImg, binaryImg, 240, 255, ThresholdType.Binary);//控制是否需要畸变校正
             //Closing
             Image<Gray, byte> closingImg = binaryImg.CopyBlank();//闭运算后图像
             CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Open, kernelClosing, new Point(-1, -1), 5, BorderType.Default, new MCvScalar(255, 0, 0, 255));
@@ -229,6 +230,15 @@ namespace ImageProcessing
                 Corner = sc.Corner;
                 LineK1 = LS[0].az;
                 LineK2 = LS[1].az == LS[0].az ? LS[2].az : LS[1].az;
+                double tempAngle = LineK1 <= LineK2 ? LineK1 : LineK2;
+                if (tempAngle * 180f / Math.PI <= 45)//顺时针
+                {
+                    RotatedAngle = tempAngle * 180f / Math.PI;
+                }
+                else//逆时针
+                {
+                    RotatedAngle = -(90-tempAngle * 180f / Math.PI);
+                }
                 //cornerPointK.Center = new PointF(cornerPointK.Corner.Average(a => a.X), cornerPointK.Corner.Average(a => a.Y));
                 Matrix<double> camerCenter = new Matrix<double>(1, 3)
                 {

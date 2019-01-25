@@ -253,7 +253,7 @@ namespace HoughCramerCornerTest
             //double robotRotated = detectCenterAndSlop.LineK1 < detectCenterAndSlop.LineK2 ? detectCenterAndSlop.LineK1 : detectCenterAndSlop.LineK2;
             //PointF robotCenter = detectCenterAndSlop.Center;
 
-            cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap, 0);
+            cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap, 1);
 
             DateTime afterDT = DateTime.Now;
             TimeSpan ts = afterDT.Subtract(beforDT);//计时结束
