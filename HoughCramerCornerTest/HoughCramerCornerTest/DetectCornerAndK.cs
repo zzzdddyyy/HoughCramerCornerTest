@@ -65,11 +65,11 @@ namespace HoughCramerCornerTest
             //获取畸变参数
             if (cameraID==0)
             {
-                GetRightCamParams();
+                GetRightCamParams();//获取右侧相机参数
             }
             else
             {
-                GetFrontCamParams();
+                GetFrontCamParams();//获取前方相机参数
             }
             
             //畸变校正
@@ -87,7 +87,7 @@ namespace HoughCramerCornerTest
             
             //二值化
             binaryImg = grayImg.CopyBlank();//创建一张和灰度图一样大小的画布
-            CvInvoke.Threshold(remapImg, binaryImg, 240, 255, ThresholdType.Binary);//控制是否需要畸变校正
+            CvInvoke.Threshold(remapImg, binaryImg, 200, 255, ThresholdType.Binary);//控制是否需要畸变校正
             //Closing
             Image<Gray, byte> closingImg = binaryImg.CopyBlank();//闭运算后图像
             CvInvoke.MorphologyEx(binaryImg, closingImg, MorphOp.Open, kernelClosing, new Point(-1, -1),5, BorderType.Default, new MCvScalar(255, 0, 0, 255));
@@ -100,7 +100,7 @@ namespace HoughCramerCornerTest
             for (int k = 0; k < contours.Size; k++)
             {
                 double area = CvInvoke.ContourArea(contours[k]);//获取各连通域的面积 
-                if (area < 2500000)//根据面积作筛选(指定最小面积,最大面积):
+                if (area < 250000)//根据面积作筛选(指定最小面积,最大面积):
                 {
                     CvInvoke.FillConvexPoly(closingImg, contours[k], new MCvScalar(0));
                 }
@@ -146,31 +146,31 @@ namespace HoughCramerCornerTest
         private void GetRightCamParams()
         {
             //填充相机矩阵
-            cameraMatrix[0, 0] = 4930.84899683025;
-            cameraMatrix[0, 1] = 0;
-            cameraMatrix[0, 2] = 2792.76945597925;
+            cameraMatrix[0, 0] = 5059.12931834576;
+            cameraMatrix[0, 1] = -0.692392244384381;
+            cameraMatrix[0, 2] = 2750.92723044525;
             cameraMatrix[1, 0] = 0;
-            cameraMatrix[1, 1] = 4930.27079004687;
-            cameraMatrix[1, 2] = 1821.74996840516;
+            cameraMatrix[1, 1] = 5057.53403912353;
+            cameraMatrix[1, 2] = 1858.08491664551;
             cameraMatrix[2, 0] = 0;
             cameraMatrix[2, 1] = 0;
             cameraMatrix[2, 2] = 1;
             //填充畸变矩阵
-            distCoeffs[0, 0] = -0.0490372460438003;
-            distCoeffs[1, 0] = 0.116466805705153;
-            distCoeffs[2, 0] = 0;
-            distCoeffs[3, 0] = 0;
-            distCoeffs[4, 0] = 0;
+            distCoeffs[0, 0] = -0.0627050596821338;//K1
+            distCoeffs[1, 0] = 0.142587435311481;//K2
+            distCoeffs[2, 0] = -0.000113201879186569;//P1
+            distCoeffs[3, 0] = 0.000348821210979477;//P2
+            distCoeffs[4, 0] = 0;//K3
             //填充坐标变换矩阵
-            rightCameraTrans[0, 0] = -1.15017394e-02;
-            rightCameraTrans[0, 1] = 6.49269479e-01;
-            rightCameraTrans[0, 2] = -1.08420217e-19;
-            rightCameraTrans[1, 0] = 6.46775302e-01;
-            rightCameraTrans[1, 1] = 9.85949589e-03;
-            rightCameraTrans[1,2] = -2.03287907e-20;
-            rightCameraTrans[2,0] = -1.13760054e+03;
-            rightCameraTrans[2,1] = 8.13282071e+02;
-            rightCameraTrans[2,2] = 1.00000000e+00;
+            rightCameraTrans[0, 0] = -1.51127803e-02;
+            rightCameraTrans[0, 1] = 6.43187885e-01;
+            rightCameraTrans[0, 2] = -1.12344669e+03;
+            rightCameraTrans[1, 0] = 6.44677412e-01;
+            rightCameraTrans[1, 1] = 1.38359506e-02;
+            rightCameraTrans[1, 2] = 8.27866536e+02;
+            rightCameraTrans[2, 0] = -5.42101086e-20;
+            rightCameraTrans[2, 1] = -6.77626358e-21;
+            rightCameraTrans[2, 2] = 1.00000000e+00;
         }
 
         /// <summary>
@@ -179,31 +179,30 @@ namespace HoughCramerCornerTest
         private void GetFrontCamParams()
         {
             //填充相机矩阵
-            cameraMatrix[0, 0] = 4982.97189998836;
-            cameraMatrix[0, 1] = 0;
-            cameraMatrix[0, 2] = 2714.21936749570;
+            cameraMatrix[0, 0] = 5010.81789826726;
+            cameraMatrix[0, 1] = 0.168076608984161;
+            cameraMatrix[0, 2] = 2768.70959640510;
             cameraMatrix[1, 0] = 0;
-            cameraMatrix[1, 1] = 4981.22950673207;
-            cameraMatrix[1, 2] = 1806.92732111017;
+            cameraMatrix[1, 1] = 5011.24572785725;
+            cameraMatrix[1, 2] = 1806.34169717229;
             cameraMatrix[2, 0] = 0;
             cameraMatrix[2, 1] = 0;
             cameraMatrix[2, 2] = 1;
             //填充畸变矩阵,先径向再切向
-            distCoeffs[0, 0] = -0.0692608998666217;
-            distCoeffs[1, 0] = 0.135826745142162;
-            distCoeffs[2, 0] = 0;
-            distCoeffs[3, 0] = 0;
-            distCoeffs[4, 0] = 0;
+            distCoeffs[0, 0] = -0.0625967952090845;//K1
+            distCoeffs[1, 0] = 0.133984194777852;//K2
+            distCoeffs[2, 0] = -0.000122713140590104;//P1
+            distCoeffs[3, 0] = 0.00160031845139996;//P2
+            distCoeffs[4, 0] = 0;//K3
             //填充坐标变换矩阵
-            //填充坐标变换矩阵
-            frontCameraTrans[0, 0] = -2.60766882e-03;
-            frontCameraTrans[0, 1] = -6.51649339e-01;
-            frontCameraTrans[0, 2] = 0.00000000e+00;
-            frontCameraTrans[1, 0] = -6.53976411e-01;
-            frontCameraTrans[1, 1] = 3.61057195e-03;
-            frontCameraTrans[1, 2] = -5.75982404e-20;
-            frontCameraTrans[2, 0] = 3.72215718e+03;
-            frontCameraTrans[2, 1] = 1.68562888e+03;
+            frontCameraTrans[0, 0] = -9.44537132e-05;
+            frontCameraTrans[0, 1] = -6.26494111e-01;
+            frontCameraTrans[0, 2] = 3.66581663e+03;
+            frontCameraTrans[1, 0] = -6.29213379e-01;
+            frontCameraTrans[1, 1] = 2.48650556e-03;
+            frontCameraTrans[1, 2] = 1.62770209e+03;
+            frontCameraTrans[2, 0] = -1.60936260e-20;
+            frontCameraTrans[2, 1] = 5.42101086e-20;
             frontCameraTrans[2, 2] = 1.00000000e+00;
         }
 

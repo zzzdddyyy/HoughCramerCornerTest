@@ -185,21 +185,37 @@ namespace ImageProcessing
         private void GetFrontCamParams()
         {
             //填充相机矩阵
-            cameraMatrix[0, 0] = 4982.97189998836;
-            cameraMatrix[0, 1] = 0;
-            cameraMatrix[0, 2] = 2714.21936749570;
+            //cameraMatrix[0, 0] = 4982.97189998836;
+            //cameraMatrix[0, 1] = 0;
+            //cameraMatrix[0, 2] = 2714.21936749570;
+            //cameraMatrix[1, 0] = 0;
+            //cameraMatrix[1, 1] = 4981.22950673207;
+            //cameraMatrix[1, 2] = 1806.92732111017;
+            //cameraMatrix[2, 0] = 0;
+            //cameraMatrix[2, 1] = 0;
+            //cameraMatrix[2, 2] = 1;
+            //填充畸变矩阵,先径向再切向
+            //distCoeffs[0, 0] = -0.0692608998666217;
+            //distCoeffs[1, 0] = 0.135826745142162;
+            //distCoeffs[2, 0] = 0;
+            //distCoeffs[3, 0] = 0;
+            //distCoeffs[4, 0] = 0;
+            //填充相机矩阵
+            cameraMatrix[0, 0] = 4968.34737738588;
+            cameraMatrix[0, 1] = -0.660134901957997;
+            cameraMatrix[0, 2] = 2738.81292921675;
             cameraMatrix[1, 0] = 0;
-            cameraMatrix[1, 1] = 4981.22950673207;
-            cameraMatrix[1, 2] = 1806.92732111017;
+            cameraMatrix[1, 1] = 4968.26443600274;
+            cameraMatrix[1, 2] = 1816.18274913489;
             cameraMatrix[2, 0] = 0;
             cameraMatrix[2, 1] = 0;
             cameraMatrix[2, 2] = 1;
             //填充畸变矩阵,先径向再切向
-            distCoeffs[0, 0] = -0.0692608998666217;
-            distCoeffs[1, 0] = 0.135826745142162;
-            distCoeffs[2, 0] = 0;
-            distCoeffs[3, 0] = 0;
-            distCoeffs[4, 0] = 0;
+            distCoeffs[0, 0] = -0.0588284370082481;//K1
+            distCoeffs[1, 0] = 0.123194919764152;//K2
+            distCoeffs[2, 0] = -0.000236824666479898;//P1
+            distCoeffs[3, 0] = 0.000763923562954248;//P2
+            distCoeffs[4, 0] = 0;//K3
             //填充坐标变换矩阵
             //填充坐标变换矩阵
             frontCameraTrans[0, 0] = -2.60766882e-03;

@@ -18,7 +18,8 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 
-using ImageProcessing;
+
+//using ImageProcessing;
 
 namespace HoughCramerCornerTest
 {
@@ -253,18 +254,18 @@ namespace HoughCramerCornerTest
             //double robotRotated = detectCenterAndSlop.LineK1 < detectCenterAndSlop.LineK2 ? detectCenterAndSlop.LineK1 : detectCenterAndSlop.LineK2;
             //PointF robotCenter = detectCenterAndSlop.Center;
 
-            cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap, 1);
+            cornerPointK = detectCorner.GetCornerAndK(myImg.Bitmap,1);
 
             DateTime afterDT = DateTime.Now;
             TimeSpan ts = afterDT.Subtract(beforDT);//计时结束
             lblSpanTime.Text = "HK算法耗时：" + ts+"S";
 
-            //LineSegment2D[] lines = detectCorner.GetLinesByHough(myImg.Bitmap,0);
-            //foreach (LineSegment2D line in lines)
-            //{
-            //    myImg.Draw(line, new Bgr(Color.Red), 10);
-            //    //detectCorner.binaryImg.Draw(line, new Gray(125), 3);
-            //}
+            LineSegment2D[] lines = detectCorner.GetLinesByHough(myImg.Bitmap, 0);
+            foreach (LineSegment2D line in lines)
+            {
+                myImg.Draw(line, new Bgr(Color.Red), 10);
+                detectCorner.binaryImg.Draw(line, new Gray(125), 3);
+            }
 
             Image<Bgr, byte> roiImage = GetROI(myImg, ROI);
 
@@ -272,6 +273,7 @@ namespace HoughCramerCornerTest
             {
                 //设置伪彩色
                 CvInvoke.Circle(myImg, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 10, new MCvScalar(0,0, 255), 10);
+                CvInvoke.Circle(detectCorner.binaryImg, new Point((int)cornerPointK.Corner[c].X, (int)cornerPointK.Corner[c].Y), 10, new MCvScalar(0,0, 255), 10);
 
                 //CvInvoke.Circle(myImg,new Point((int)cornerPointK.Corner.X,(int)cornerPointK.Corner.Y),4,new MCvScalar(0,255,0),3 );
                 CvInvoke.PutText(myImg, string.Format("x={0:0.##}  y={1:0.##}", cornerPointK.Corner[c].X, cornerPointK.Corner[c].Y),
